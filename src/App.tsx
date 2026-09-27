@@ -71,33 +71,37 @@ const prettyDate = (key: string) =>
 const dateCaption = (key: string) =>
   `${Number(key.slice(5, 7))}월 ${Number(key.slice(8))}일`;
 
+const SLOT_HEIGHT = 88;
+
+function LessonTags({ lesson }: { lesson: Lesson }) {
+  return <span className="lesson-tags">
+    <span className="schedule-tag location-tag" data-location={lesson.location} aria-label={`장소: ${lesson.location}`} title={`장소: ${lesson.location}`}>{lesson.location}</span>
+    <span className="schedule-tag kind-tag" aria-label={`수업 종류: ${lesson.kind}`} title={`수업 종류: ${lesson.kind}`}>{lesson.kind}</span>
+    <span className="schedule-tag status-tag" data-status={lesson.status} aria-label={`상태: ${lesson.status}`} title={`상태: ${lesson.status}`}><i aria-hidden="true" />{lesson.status}</span>
+  </span>;
+}
+
 function LessonButton({
   lesson,
   onOpen,
   style,
-  compact = false,
 }: {
   lesson: Lesson;
   onOpen: (lesson: Lesson) => void;
   style?: CSSProperties;
-  compact?: boolean;
 }) {
   return (
     <button
-      className={`lesson ${compact ? "compact" : ""} ${isInactive(lesson) ? "inactive" : ""}`}
+      className={`lesson ${isInactive(lesson) ? "inactive" : ""}`}
       style={{ ...paint(lesson.instructor), ...style }}
       onClick={() => onOpen(lesson)}
-      title={`${lesson.instructor} · ${shortTitle(lesson.title)} · ${timeLabel(lesson.start)}–${timeLabel(lesson.end)} · ${lesson.status}`}
+      title={`${lesson.instructor} · ${shortTitle(lesson.title)} · ${timeLabel(lesson.start)}–${timeLabel(lesson.end)} · ${lesson.location} · ${lesson.kind} · ${lesson.status}`}
     >
       <span className="lesson-time">
         {timeLabel(lesson.start)}–{timeLabel(lesson.end)}
       </span>
       <strong>{shortTitle(lesson.title)}</strong>
-      {!compact && (
-        <span className="lesson-meta">
-          {lesson.location} · {lesson.kind} · {lesson.status}
-        </span>
-      )}
+      <LessonTags lesson={lesson} />
     </button>
   );
 }
@@ -139,14 +143,14 @@ function WeekCalendar({
             items.filter((x) => x.date === day && x.instructor === name),
           ).map((x) => x.lanes),
         );
-        return sum + maxLanes * 144;
+        return sum + maxLanes * 176;
       }, 0),
     ),
   );
   const firstDayStart = Math.min(
     ...items.filter((x) => x.date === items[0]?.date).map((x) => x.start),
   );
-  const initialScroll = Math.max(0, ((firstDayStart - start - 30) / 30) * 44);
+  const initialScroll = Math.max(0, ((firstDayStart - start - 30) / 30) * SLOT_HEIGHT);
   const periodKey = weekStart(date);
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = initialScroll;
@@ -159,7 +163,7 @@ function WeekCalendar({
         ? Math.max(
             0,
             ((Math.min(...dayItems.map((x) => x.start)) - start - 30) / 30) *
-              44,
+              SLOT_HEIGHT,
           )
         : 0,
       behavior: "smooth",
@@ -190,9 +194,10 @@ function WeekCalendar({
         <div
           className="week-grid"
           style={{
+            "--slot-height": `${SLOT_HEIGHT}px`,
             gridTemplateColumns: template,
             width: widths.reduce((a, b) => a + b, 64),
-          }}
+          } as CSSProperties}
         >
           <div className="week-corner">KST</div>
           {days.map((day, i) => (
@@ -231,9 +236,9 @@ function WeekCalendar({
               </div>
             </div>
           ))}
-          <div className="time-axis" style={{ height: ticks.length * 44 }}>
+          <div className="time-axis" style={{ height: ticks.length * SLOT_HEIGHT }}>
             {ticks.map((time) => (
-              <span key={time} style={{ top: ((time - start) / 30) * 44 }}>
+              <span key={time} style={{ top: ((time - start) / 30) * SLOT_HEIGHT }}>
                 {timeLabel(time)}
               </span>
             ))}
@@ -242,7 +247,7 @@ function WeekCalendar({
             <div
               key={day}
               className={`day-body ${i > 4 ? "weekend" : ""}`}
-              style={{ height: ticks.length * 44 }}
+              style={{ height: ticks.length * SLOT_HEIGHT }}
             >
               {dayInstructors[i]!.map((name) => {
                 const entries = layoutLessons(
@@ -260,11 +265,10 @@ function WeekCalendar({
                         key={lesson.id}
                         lesson={lesson}
                         onOpen={onOpen}
-                        compact={lesson.end - lesson.start <= 30}
                         style={{
                           position: "absolute",
-                          top: ((lesson.start - start) / 30) * 44 + 2,
-                          height: ((lesson.end - lesson.start) / 30) * 44 - 4,
+                          top: ((lesson.start - start) / 30) * SLOT_HEIGHT + 2,
+                          height: ((lesson.end - lesson.start) / 30) * SLOT_HEIGHT - 4,
                           left: `calc(${(lane / lanes) * 100}% + 4px)`,
                           width: `calc(${100 / lanes}% - 8px)`,
                         }}
@@ -334,6 +338,7 @@ function MonthCalendar({
                     {lesson.instructor.replace("_", " ")}
                   </span>
                   <strong>{shortTitle(lesson.title)}</strong>
+                  <LessonTags lesson={lesson} />
                 </button>
               ))}
               {events.length > 3 && (
