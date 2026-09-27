@@ -59,6 +59,17 @@ export const instructorsOf = (lessons: Lesson[]) =>
   [...new Set(lessons.map((lesson) => lesson.instructor))].sort((a, b) =>
     a.localeCompare(b, "ko"),
   );
+// Order a day's instructor columns by their earliest visible lesson.
+export function instructorsByStartTime(lessons: Lesson[]) {
+  const firstStarts = new Map<string, number>();
+  for (const lesson of lessons) {
+    firstStarts.set(lesson.instructor, Math.min(firstStarts.get(lesson.instructor) ?? Infinity, lesson.start));
+  }
+  return [...firstStarts.keys()].sort((a, b) =>
+    firstStarts.get(a)! - firstStarts.get(b)! || a.localeCompare(b, "ko"),
+  );
+}
+
 export const koreaToday = () =>
   new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Seoul",

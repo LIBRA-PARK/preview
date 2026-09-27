@@ -20,6 +20,7 @@ import {
   addDays,
   dateValue,
   instructorsOf,
+  instructorsByStartTime,
   isInactive,
   koreaToday,
   layoutLessons,
@@ -130,7 +131,7 @@ function WeekCalendar({
     (_, i) => start + i * 30,
   );
   const dayInstructors = days.map((day) =>
-    instructorsOf(items.filter((x) => x.date === day)),
+    instructorsByStartTime(items.filter((x) => x.date === day)),
   );
   const widths = dayInstructors.map((names, index) =>
     Math.max(

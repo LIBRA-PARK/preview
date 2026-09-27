@@ -6,6 +6,7 @@ import {
   periodRange,
   periodLessons,
   instructorsOf,
+  instructorsByStartTime,
   layoutLessons,
   isInactive,
   moveMonth,
@@ -88,4 +89,13 @@ test("instructor search accepts the displayed space and original underscore", ()
   assert.ok(matchesSearch(lesson, "강사_C"));
   assert.ok(matchesSearch(lesson, "강사 c"));
   assert.equal(matchesSearch(lesson, "강사 Z"), false);
+});
+
+test("instructor columns use earliest visible start, then name for ties", () => {
+  const item = (instructor, start) => ({ ...data[0], instructor, start });
+  const lessons = [item("강사_A", 900), item("강사_C", 600), item("강사_B", 600), item("강사_A", 540)];
+  assert.deepEqual(instructorsByStartTime(lessons), ["강사_A", "강사_B", "강사_C"]);
+  assert.deepEqual(instructorsByStartTime(lessons.slice(0, 3)), ["강사_B", "강사_C", "강사_A"]);
+  assert.deepEqual(instructorsByStartTime([]), []);
+  assert.deepEqual(instructorsByStartTime(data.filter(x => x.date === "2026-09-21" && !isInactive(x))), ["강사_A", "강사_G", "강사_C", "강사_J", "강사_D", "강사_I"]);
 });
