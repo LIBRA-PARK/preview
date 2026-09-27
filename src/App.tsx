@@ -13,6 +13,8 @@ import {
   X,
   ArrowUpRight,
   CalendarOff,
+  Upload,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import data from "@/data/schedule.json";
@@ -35,10 +37,11 @@ import {
   type CalendarView,
   type Lesson,
 } from "@/lib/schedule";
+import { parseScheduleCsv } from "@/lib/import-csv";
 import "./calendar.css";
 
-const lessons: Lesson[] = data;
-const instructors = instructorsOf(lessons);
+const defaultLessons: Lesson[] = data;
+const instructors = instructorsOf(defaultLessons);
 const colors = [
   "#527767",
   "#6c70aa",
@@ -54,14 +57,12 @@ const colors = [
   "#8c8070",
 ];
 const colorOf = (name: string) =>
-  colors[instructors.indexOf(name) % colors.length]!;
+  colors[(instructors.includes(name) ? instructors.indexOf(name) : [...name].reduce((sum, char) => sum + char.codePointAt(0)!, 0)) % colors.length]!;
 const paint = (name: string) =>
   ({ "--instructor-color": colorOf(name) }) as CSSProperties;
 const today = koreaToday();
-const initialDate =
-  today >= lessons[0]!.date && today <= lessons.at(-1)!.date
-    ? today
-    : lessons[0]!.date;
+const initialDateFor = (items: Lesson[]) =>
+  today >= items[0]!.date && today <= items.at(-1)!.date ? today : items[0]!.date;
 const prettyDate = (key: string) =>
   new Intl.DateTimeFormat("ko-KR", {
     month: "long",
@@ -356,7 +357,15 @@ function MonthCalendar({
 }
 
 export default function App() {
-  const [date, setDate] = useState(initialDate);
+  const [lessons, setLessons] = useState<Lesson[]>(defaultLessons);
+  const [date, setDate] = useState(() => initialDateFor(defaultLessons));
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
+  const uploadVersion = useRef(0);
   const [view, setView] = useState<CalendarView>("week");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("전체 장소");
@@ -386,6 +395,39 @@ export default function App() {
     setShowInactive(false);
     setSelected(null);
   };
+  const applyLessons = (next: Lesson[], name: string | null) => {
+    setLessons(next);
+    setFileName(name);
+    setDate(initialDateFor(next));
+    reset();
+    setDetail(null);
+    setDayDetail(null);
+    setUploadError("");
+  };
+  const uploadCsv = async (files: File[]) => {
+    const version = ++uploadVersion.current;
+    setUploading(false);
+    setUploadError("");
+    if (files.length !== 1) { setUploadError("CSV 파일을 한 개씩 선택해 주세요."); return; }
+    const file = files[0]!;
+    if (!/\.csv$/i.test(file.name)) { setUploadError(".csv 형식의 파일을 선택해 주세요."); return; }
+    if (file.size > 5 * 1024 * 1024) { setUploadError("5MB 이하의 CSV 파일을 선택해 주세요."); return; }
+    setUploading(true);
+    try {
+      const text = await file.text();
+      if (version !== uploadVersion.current) return;
+      applyLessons(parseScheduleCsv(text), file.name);
+    } catch (error) {
+      if (version === uploadVersion.current) setUploadError(error instanceof Error ? error.message : "파일을 읽지 못했습니다. 다시 선택해 주세요.");
+    } finally {
+      if (version === uploadVersion.current) setUploading(false);
+    }
+  };
+  const restoreDefault = () => {
+    uploadVersion.current++;
+    setUploading(false);
+    applyLessons(defaultLessons, null);
+  };
   const navigate = (direction: number) =>
     setDate(
       view === "week"
@@ -412,7 +454,14 @@ export default function App() {
 
   return (
     <div className="schedule-app">
-      <header className="instructor-header" aria-label="강사별 모아보기">
+      <header className={`instructor-header ${dragging ? "csv-dragging" : ""}`} aria-label="강사별 모아보기"
+        onDragEnter={event => { if (event.dataTransfer.types.includes("Files")) { event.preventDefault(); dragDepth.current++; setDragging(true); } }}
+        onDragOver={event => { if (event.dataTransfer.types.includes("Files")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }}
+        onDragLeave={() => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (!dragDepth.current) setDragging(false); }}
+        onDrop={event => { event.preventDefault(); dragDepth.current = 0; setDragging(false); void uploadCsv(Array.from(event.dataTransfer.files)); }}
+      >
+        <input ref={inputRef} className="csv-file-input" type="file" accept=".csv,text/csv" aria-label="일정 CSV 파일 선택" onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ""; if (files.length) void uploadCsv(files); }} />
+        {dragging && <div className="csv-drop-overlay"><Upload size={24} /><strong>CSV 파일을 놓아 일정을 적용하세요</strong></div>}
         <div className="instructor-header-top">
           <a className="brand" href={import.meta.env.BASE_URL}>
             <span><CalendarDays size={22} /></span>
@@ -422,8 +471,16 @@ export default function App() {
             <h2>강사별 모아보기</h2>
             <span>이 기간에 수업이 있는 강사 {activeInstructors.length}명</span>
           </div>
+          <div className="csv-upload-actions">
+            <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}><Upload size={15} />{uploading ? "읽는 중…" : "CSV 업로드"}</Button>
+            {fileName && <button className="restore-csv" onClick={restoreDefault} title="기본 일정으로 복원"><RotateCcw size={14} />기본 일정</button>}
+          </div>
           <button className="clear-instructors" onClick={() => setSelected([])}>선택 해제</button>
         </div>
+        <div className="csv-upload-info" role="status" aria-live="polite">
+          {fileName ? <><strong title={fileName}>{fileName}</strong><span>· {lessons.length}건 적용 · 새로고침 시 기본 일정으로 돌아갑니다.</span></> : <span>CSV 파일을 이 헤더에 놓거나 업로드하세요. 파일은 서버로 전송되지 않습니다.</span>}
+        </div>
+        {uploadError && <div className="csv-upload-error" role="alert"><span>{uploadError} 기존 일정은 유지됩니다.</span><button aria-label="업로드 오류 닫기" onClick={() => setUploadError("")}><X size={16} /></button></div>}
         <div className="instructor-header-filters">
           <button
             className="all-instructors"
@@ -580,8 +637,7 @@ export default function App() {
                 onChange={(e) => setLocation(e.target.value)}
               >
                 <option>전체 장소</option>
-                <option>본관</option>
-                <option>별관</option>
+                {[...new Set(lessons.map(lesson => lesson.location))].sort().map(name => <option key={name}>{name}</option>)}
               </select>
             </label>
             <label className="inactive-filter">

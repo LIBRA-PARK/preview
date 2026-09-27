@@ -1346,3 +1346,21 @@ select:focus-visible {
 .month-event strong { font-size: 11px; }
 .month-event .lesson-tags { display: flex; margin-top: 0; }
 .month-event .schedule-tag { font-size: 10px; }
+.csv-file-input { display: none; }
+.csv-upload-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.csv-upload-actions + .clear-instructors { margin-left: 0; }
+.restore-csv { display: flex; align-items: center; gap: 5px; color: #7b8979; font-size: 11px; white-space: nowrap; }
+.csv-upload-info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; margin: -2px 0 6px; color: #80907e; font-size: 10px; line-height: 1.6; }
+.csv-upload-info strong { max-width: min(460px, 100%); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; color: #49674c; }
+.csv-upload-error { display: flex; justify-content: space-between; gap: 10px; border: 1px solid #eed4cd; background: #fff3ee; color: #914b38; padding: 9px 12px; border-radius: 6px; margin: 7px 0; font-size: 12px; }
+.csv-upload-error button { align-self: flex-start; flex-shrink: 0; }
+.csv-dragging { outline: 2px dashed #648a65; outline-offset: -5px; }
+.csv-drop-overlay { position: absolute; inset: 0; background: #edf5eef5; color: #365f4d; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 1; pointer-events: none; }
+@media(max-width:760px) {
+  .instructor-header-top { flex-wrap: wrap; gap: 8px 12px; }
+  .csv-upload-actions { gap: 7px; }
+  .csv-upload-actions button { font-size: 10px; }
+  .csv-upload-actions > button:first-child { padding: 0 7px; }
+  .csv-upload-info { font-size: 9px; }
+  .csv-drop-overlay { font-size: 12px; padding: 14px; }
+}
