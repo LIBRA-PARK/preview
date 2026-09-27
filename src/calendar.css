@@ -1217,3 +1217,108 @@ select:focus-visible {
     padding-bottom: 8px;
   }
 }
+
+/* Instructor controls stay available while the page or calendar is scrolled. */
+.schedule-app {
+  flex-direction: column;
+}
+.calendar-main {
+  width: 100%;
+}
+.instructor-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 3px 12px #253c3206;
+  padding: 14px 36px 10px;
+}
+.instructor-header-top {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-bottom: 10px;
+}
+.instructor-header .brand {
+  margin: 0;
+  flex-shrink: 0;
+}
+.header-caption h2 {
+  font-size: 13px;
+  font-weight: 650;
+}
+.header-caption > span {
+  display: block;
+  color: #8b968d;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.clear-instructors {
+  margin-left: auto;
+  color: #7c8a7d;
+  font-size: 11px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.clear-instructors:hover { text-decoration: underline; }
+.instructor-header-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.all-instructors {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 39px;
+  padding: 0 12px;
+  border: 1px solid #dce5dc;
+  border-radius: 7px;
+  font-size: 12px;
+  color: #627663;
+  background: #fff;
+}
+.all-instructors[aria-pressed="true"] {
+  background: #365f4d;
+  border-color: #365f4d;
+  color: #fff;
+}
+.all-instructors small { font-size: 10px; opacity: .75; }
+.instructor-header .instructor-list {
+  flex-direction: row;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 4px;
+  scrollbar-width: thin;
+}
+.instructor-header .instructor-filter {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  padding: 6px 9px;
+  gap: 7px;
+  white-space: nowrap;
+}
+.instructor-header .instructor-filter:has(input:checked) {
+  border-color: color-mix(in srgb, var(--instructor-color) 35%, white);
+  background: color-mix(in srgb, var(--instructor-color) 5%, white);
+}
+.instructor-header .filter-help { display: block; white-space: nowrap; }
+@media (max-width: 760px) {
+  .instructor-header { padding: 10px 14px 8px; }
+  .instructor-header-top { gap: 15px; margin-bottom: 8px; }
+  .instructor-header .brand > div > span { display: none; }
+  .instructor-header .brand > span { width: 32px; height: 34px; border-radius: 9px; }
+  .header-caption h2 { font-size: 11px; }
+  .header-caption > span { font-size: 9px; }
+  .clear-instructors { font-size: 10px; padding: 4px 0; }
+  .instructor-header-filters { gap: 6px; }
+  .all-instructors { height: 33px; font-size: 11px; gap: 5px; padding: 0 8px; }
+  .all-instructors svg { width: 14px; }
+  .instructor-header .instructor-filter { padding: 7px 8px; }
+}

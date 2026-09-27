@@ -9,7 +9,6 @@ import {
   Clock3,
   MapPin,
   Search,
-  SlidersHorizontal,
   Users,
   X,
   ArrowUpRight,
@@ -407,66 +406,38 @@ export default function App() {
 
   return (
     <div className="schedule-app">
-      <aside className="sidebar">
-        <a className="brand" href={import.meta.env.BASE_URL}>
-          <span>
-            <CalendarDays size={22} />
-          </span>
-          <div>
-            모아<span>수업을 한눈에, 일정을 함께</span>
+      <header className="instructor-header" aria-label="강사별 모아보기">
+        <div className="instructor-header-top">
+          <a className="brand" href={import.meta.env.BASE_URL}>
+            <span><CalendarDays size={22} /></span>
+            <div>모아<span>수업을 한눈에, 일정을 함께</span></div>
+          </a>
+          <div className="header-caption">
+            <h2>강사별 모아보기</h2>
+            <span>이 기간에 수업이 있는 강사 {activeInstructors.length}명</span>
           </div>
-        </a>
-        <div className="sidebar-section-label">WORKSPACE</div>
-        <div className="active-nav">
-          <CalendarDays size={18} />
-          수업 캘린더<span>{lessons.length}</span>
+          <button className="clear-instructors" onClick={() => setSelected([])}>선택 해제</button>
         </div>
-        <div className="sidebar-divider" />
-        <div className="filter-title">
-          <h2>강사별 보기</h2>
-          <span>{activeInstructors.length}</span>
-        </div>
-        <p className="filter-help">이 기간에 수업이 있는 강사만 표시해요.</p>
-        <div className="selection-actions">
-          <button onClick={() => setSelected(null)}>전체 선택</button>
-          <span>·</span>
-          <button onClick={() => setSelected([])}>선택 해제</button>
-        </div>
-        <div className="instructor-list">
-          {activeInstructors.map((name) => (
-            <label className="instructor-filter" key={name} style={paint(name)}>
-              <input
-                type="checkbox"
-                checked={selected === null || selected.includes(name)}
-                onChange={() => toggleInstructor(name)}
-              />
-              <span className="instructor-avatar">
-                {name.split("_").at(-1)}
-              </span>
-              <span>{name.replace("_", " ")}</span>
-              <small>{base.filter((x) => x.instructor === name).length}</small>
-            </label>
-          ))}
-          {!activeInstructors.length && (
-            <p className="filter-help">표시할 강사가 없습니다.</p>
-          )}
-        </div>
-        <div className="sidebar-note">
-          <SlidersHorizontal size={16} />
-          <div>
-            필요한 일정만, 간결하게
-            <p>
-              강사와 장소를 선택해
-              <br />
-              수업 일정을 확인하세요.
-            </p>
+        <div className="instructor-header-filters">
+          <button
+            className="all-instructors"
+            aria-pressed={selected === null || (activeInstructors.length > 0 && activeInstructors.every(name => selected.includes(name)))}
+            onClick={() => setSelected(null)}
+            title="검색·장소 조건에 맞는 모든 강사의 일정 보기"
+          ><Users size={16} /><span>전체 보기</span><small>{base.length}</small></button>
+          <div className="instructor-list" role="group" aria-label="강사 선택">
+            {activeInstructors.map(name => (
+              <label className="instructor-filter" key={name} style={paint(name)}>
+                <input type="checkbox" checked={selected === null || selected.includes(name)} onChange={() => toggleInstructor(name)} />
+                <span className="instructor-avatar">{name.split("_").at(-1)}</span>
+                <span>{name.replace("_", " ")}</span>
+                <small>{base.filter(x => x.instructor === name).length}</small>
+              </label>
+            ))}
+            {!activeInstructors.length && <p className="filter-help">표시할 강사가 없습니다.</p>}
           </div>
         </div>
-        <div className="source-note">
-          <span className="source-dot" />
-          CSV 일정 데이터 <span>{lessons.length}건</span>
-        </div>
-      </aside>
+      </header>
       <main className="calendar-main">
         <header className="page-heading">
           <div>
